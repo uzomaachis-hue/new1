@@ -42,8 +42,8 @@ export const authOptions: NextAuthOptions = {
           name: `${user.firstName} ${user.lastName}`,
           role: user.role,
           departmentId: user.departmentId,
-          departmentName: user.department?.name
-        }
+          departmentName: user.department?.name || null
+        } as any
       }
     })
   ],
