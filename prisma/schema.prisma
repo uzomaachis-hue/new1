@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  ADMIN
+  MD
+  EXECUTIVE_DIRECTOR
+  GENERAL_MANAGER
+  PRINCIPLE_MANAGER
+  SENIOR_MANAGER
+  MANAGER
+  ASSISTANT_MANAGER
+  OFFICER_1
+  OFFICER_2
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  username        String    @unique
+  password        String
+  firstName       String
+  lastName        String
+  role            UserRole
+  departmentId    Int?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  jobTitle        String?
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  lastLogoutAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sentDocuments   Document[] @relation("SentDocuments")
+  receivedDocuments Document[] @relation("ReceivedDocuments")
+  comments        Comment[]
+  helpDeskTickets HelpDeskTicket[] @relation("SubmittedTickets")
+  assignedTickets HelpDeskTicket[] @relation("AssignedTickets")
+  workedOnTickets HelpDeskTicket[] @relation("WorkedOnTickets")
+}
+
+model Document {
+  id              Int       @id @default(autoincrement())
+  title           String
+  description     String?
+  fileUrl         String
+  fileName        String
+  fileSize        Int
+  mimeType        String
+  senderId        Int
+  sender          User      @relation("SentDocuments", fields: [senderId], references: [id])
+  recipientId     Int
+  recipient       User      @relation("ReceivedDocuments", fields: [recipientId], references: [id])
+  status          String    @default("pending") // pending, reviewed, approved, rejected, archived
+  isArchived      Boolean   @default(false)
+  dueDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  comments        Comment[]
+}
+
+model Comment {
+  id              Int       @id @default(autoincrement())
+  content         String
+  documentId      Int
+  document        Document  @relation(fields: [documentId], references: [id])
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id])
+  createdAt       DateTime  @default(now())
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model HelpDeskTicket {
+  id              Int           @id @default(autoincrement())
+  title           String
+  description     String
+  priority        TicketPriority
+  status          TicketStatus  @default(OPEN)
+  submittedById   Int
+  submittedBy     User          @relation("SubmittedTickets", fields: [submittedById], references: [id])
+  assignedToId    Int?
+  assignedTo      User?         @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  workedOnById    Int?
+  workedOnBy      User?         @relation("WorkedOnTickets", fields: [workedOnById], references: [id])
+  resolvedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Notification {
+  id              Int       @id @default(autoincrement())
+  title           String
+  message         String
+  isImportant     Boolean   @default(false)
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+}
